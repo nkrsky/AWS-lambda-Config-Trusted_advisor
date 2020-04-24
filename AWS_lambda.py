@@ -10,7 +10,6 @@ support_client = boto3.client('support', region_name='us-east-1')
 
 def lambda_handler(event, context):
     try:
-
         ta_checks = support_client.describe_trusted_advisor_checks(language='en')
         checks_list = {ctgs: [] for ctgs in list(set([checks['category'] for checks in ta_checks['checks']]))}
         for checks in ta_checks['checks']:
@@ -34,7 +33,7 @@ def lambda_handler(event, context):
                     # print(check_summary['resourcesSummary']['resourcesFlagged'])
 
                     if (check_summary['status'] != 'not_available' and checks['id'] == 'hjLMh88uM8' and
-                            check_summary['resourcesSummary']['resourcesFlagged'] == 0):
+                            check_summary['resourcesSummary']['resourcesFlagged'] > 0):
                         Trigger_notification(check_summary, checks['name'], checks['id'])
 
 
