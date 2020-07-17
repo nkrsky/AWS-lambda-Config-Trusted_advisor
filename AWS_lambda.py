@@ -10,49 +10,54 @@ support_client = boto3.client('support', region_name='us-east-1')
 
 def lambda_handler(event, context):
     try:
-        ta_checks = support_client.describe_trusted_advisor_checks(language='en')
-        checks_list = {ctgs: [] for ctgs in list(set([checks['category'] for checks in ta_checks['checks']]))}
-        for checks in ta_checks['checks']:
+        TrustedAdvisoryChecks = support_client.describe_trusted_advisor_checks(language='en')
+        ResourceList = {accountTags: [] for accountTags in list(set([token['category'] for token in TrustedAdvisoryChecks['checks']]))}
+        for token in TrustedAdvisoryChecks['checks']:
             try:
-                test = ['hjLMh88uM8', 'iqdCTZKCUp', '7qGXsKIUw']
+                test = ['hjLMh88uM8', 'iqdCTZKCUp','Z4AUBRNSmz']
 
-                if (checks['id'] in test):
-                    support_client.refresh_trusted_advisor_check(checkId=checks['id'])
-                    print('Refreshing check: ' + checks['name'])
-                    check_summary = \
-                        support_client.describe_trusted_advisor_check_summaries(checkIds=[checks['id']])['summaries'][0]
-                    # print ("check : {0}".format(check_summary))
-                    checks_list[checks['category']].append([checks['name'], check_summary['status'],
-                                                            str(check_summary['resourcesSummary'][
+                # hjLMh88uM8 ->Idle Load Balancers
+                # iqdCTZKCUp ->Load Balancer Optimization
+                # 7qGXsKIUw ->ELB Connection Draining
+                # Z4AUBRNSmz ->Unassociated Elastic IP Addresses
+
+                if (token['id'] in test):
+                    support_client.refresh_trusted_advisor_check(checkId=token['id'])
+                    print('Refreshing check: ' + token['name'])
+                    Results = \
+                        support_client.describe_trusted_advisor_check_summaries(checkIds=[token['id']])['summaries'][0]
+                    # print ("check : {0}".format(Results))
+                    ResourceList[token['category']].append([token['name'], Results['status'],
+                                                            str(Results['resourcesSummary'][
                                                                     'resourcesProcessed']),
-                                                            str(check_summary['resourcesSummary']['resourcesFlagged']),
-                                                            str(check_summary['resourcesSummary'][
+                                                            str(Results['resourcesSummary']['resourcesFlagged']),
+                                                            str(Results['resourcesSummary'][
                                                                     'resourcesSuppressed']),
-                                                            str(check_summary['resourcesSummary']['resourcesIgnored'])])
-                    print("check summary {}".format(check_summary))
-                    # print(check_summary['resourcesSummary']['resourcesFlagged'])
+                                                            str(Results['resourcesSummary']['resourcesIgnored'])])
+                    print("check summary {}".format(Results))
+                    # print(Results['resourcesSummary']['resourcesFlagged'])
 
-                    if (check_summary['status'] != 'not_available' and checks['id'] == 'hjLMh88uM8' and
-                            check_summary['resourcesSummary']['resourcesFlagged'] > 0):
-                        Trigger_notification(check_summary, checks['name'], checks['id'])
-
-
-                    elif (check_summary['status'] != 'not_available' and checks['id'] == 'iqdCTZKCUp' and
-                          check_summary['resourcesSummary']['resourcesFlagged'] > 0):
-                        Trigger_notification(check_summary, checks['name'], checks['id'])
+                    if (Results['status'] != 'not_available' and token['id'] == 'hjLMh88uM8' and
+                            Results['resourcesSummary']['resourcesFlagged'] > 0):
+                        Trigger_notification(Results, token['name'], token['id'])
 
 
-                    elif (check_summary['status'] != 'not_available' and checks['id'] == '7qGXsKIUw' and
-                          check_summary['resourcesSummary']['resourcesFlagged'] > 0):
-                        Trigger_notification(check_summary, checks['name'], checks['id'])
+                    elif (Results['status'] != 'not_available' and token['id'] == 'iqdCTZKCUp' and
+                          Results['resourcesSummary']['resourcesFlagged'] > 0):
+                        Trigger_notification(Results, token['name'], token['id'])
+
+
+                    elif (Results['status'] != 'not_available' and token['id'] == 'Z4AUBRNSmz' and
+                          Results['resourcesSummary']['resourcesFlagged'] > 0):
+                        Trigger_notification(Results, token['name'], token['id'])
 
 
             except ClientError:
-                print('Cannot refresh check: ' + checks['name'])
+                print('Failed to refresh check: ' + token['name'])
                 continue
 
     except:
-        print('Failed! Debug further.')
+        print('Operation not succeeded')
         traceback.print_exc()
 
 
