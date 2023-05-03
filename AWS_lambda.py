@@ -61,16 +61,5 @@ def lambda_handler(event, context):
         traceback.print_exc()
 
 
-def Trigger_notification(detailed_check, check_name, checks_id):
-    result = support_client.describe_trusted_advisor_check_result(checkId=checks_id, language='en')
-    flagResources = result['result']['flaggedResources']
-    response = sns.publish(
-        TopicArn=os.environ['TOPIC_ARN'],
-        Subject=check_name,
-        Message=str(flagResources)
-    )
-    print("Notification send")
-
-
 if __name__ == '__main__':
     lambda_handler('event', 'handler')
